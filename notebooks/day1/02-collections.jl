@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.10
+# v0.20.13
 
 using Markdown
 using InteractiveUtils
@@ -28,7 +28,7 @@ using Images
 # ╔═╡ 7308bc54-e6cd-11ea-0eab-83f7535edf25
 # edit the code below to set your name and UGent username
 
-student = (name = "Jimmy Janssen", email = "Jimmy.Janssen@UGent.be");
+student = (name = "Michiel Huttener", email = "Michiel.Huttener@UGent.be");
 
 # press the ▶ button in the bottom right of this cell to run your edits
 # or use Shift+Enter
@@ -217,25 +217,25 @@ rand(Bool, 10)  # specify the type, many packages overload rand for other stuff
 """
 
 # ╔═╡ 4b3317da-4c1f-11eb-19d5-03570c4d65df
-
+C = [] 
 
 # ╔═╡ 503c9da0-4c1f-11eb-292a-db7b8ce9f458
-
+zeros(5)
 
 # ╔═╡ 503d455c-4c1f-11eb-3af2-8f200db1fd30
-
+ones(3,3)
 
 # ╔═╡ 504d8aca-4c1f-11eb-3600-d77038b0f2bc
-
+fill(0.5, 10)
 
 # ╔═╡ 505874a8-4c1f-11eb-1132-3bbba81ae1db
-
+rand(2)
 
 # ╔═╡ 5071c430-4c1f-11eb-226b-634abae6082f
-
+randn(2)
 
 # ╔═╡ c2ccb916-5a72-11eb-16d9-15283727d6cf
-
+rand(Bool, 10)
 
 # ╔═╡ 52a8a6ec-4c1f-11eb-386c-a99ef05b41b0
 md"Often it is better to provide a specific type for initialization. For numeric elements `Float64` is the default."
@@ -317,7 +317,7 @@ P = [0 1 1; 2 3 5; 8 13 21; 34 55 89]
 size(P)
 
 # ╔═╡ 08e5589e-661f-11eb-262a-dd917f77f56b
-size(P, 1)  # size first dimention
+size(P, 1)  # size first dimension
 
 # ╔═╡ 0b9bad58-4c24-11eb-26a8-1d04d7b2be61
 P[3,2]  # indexing
@@ -538,7 +538,7 @@ md"Similar to the `range` function in Python, the object that is created is not 
 
 # ╔═╡ 9fd1be0a-4c4b-11eb-299b-f7f0d8797f71
 let
-	for i in ur
+	for i in str
 	  println(i)
 	end
 end
@@ -695,7 +695,7 @@ One ring to bring them all
 """
 
 # ╔═╡ 5fb7bbbf-63a7-4bd5-88dc-24f4ac330266
-println(mylongstring)
+print(mylongstring)
 
 # ╔═╡ 636d20ce-efce-48f2-a7cb-c8db7bb0cc3a
 md"Note that there is a `\n` at the end that is not so tidy. This frequently occurs when parsing strings and can be solved by `rstrip`."
@@ -809,15 +809,19 @@ md"**Integral 1:**  $\int_0^{2\pi} x\,\sin(x)\,dx$ (n=100)"
 # ╔═╡ bb5aa3d3-fe95-479b-905f-f546a3e16309
 md" **Integral 2:**  $\int_0^1 \sqrt{1 - x^2}\,dx$ (n=1000)"
 
+# ╔═╡ f35d00bb-76f5-4fc4-92f5-9bb572f0c064
+collect(range(start=0,length=10, step=.1))
+
 # ╔═╡ 3de1f1aa-58bd-11eb-2ffc-0de292b13840
 function riemannsum(f, a, b; n=100)
-  return missing
+	Δx = (b-a)/n
+  	return sum(f,range(a,length=n,step=Δx)) * Δx
 end
 
 # ╔═╡ 5f47cdf0-58be-11eb-1bca-a3d0941b9bea
 begin 
-	integral1 = missing #...
-	integral2 = missing #...
+	integral1 = riemannsum(x -> x*sin(x), 0, 2*π)
+	integral2 = riemannsum(x -> sqrt(1-x^2), 0, 1; n=1000)
 end;
 
 # ╔═╡ c1e377c4-64a4-11eb-3e7f-b163cb465057
@@ -834,7 +838,9 @@ The function should return `true` if the configuration is valid, indicating that
 # ╔═╡ 1c357d6f-7ac0-4e4d-82c4-b0c83fb65bbd
 function rook_problem(board::Matrix{Bool})
 	@assert count(board) == size(board, 1) == size(board, 2) "Wrong number of rooks or not a square board"
-	return missing
+	rows_ok = all([foldl(⊻,board[i,:]) for i in 1:count(board)])
+	cols_ok = all([foldl(⊻,board[:,i]) for i in 1:count(board)])
+	return rows_ok && cols_ok
 end
 
 # ╔═╡ 45ea911b-7feb-4c9e-a81b-813cdd9e0e30
@@ -863,13 +869,19 @@ Hints:
 
 # ╔═╡ cb20fffe-58cf-11eb-1b65-49699f2d3699
 function estimatepi(n)
-	missing
+	4 * sum(x^2 + y^2 < 1 for (x, y) in eachcol(2rand(2, n) .- 1)) / n
 end
 
 # ╔═╡ cee388d2-58cf-11eb-3b88-971b4b85e957
 function estimatepi2(n)
-	missing
+	4count(x-> x ≤ 1.0, sum(rand(n, 2).^2, dims=2)) / n
 end
+
+# ╔═╡ 0882a9ad-66e4-491d-8327-e0b11f82a3a1
+estimatepi(10_000_000)
+
+# ╔═╡ 4628d107-7b20-43be-b6d0-454020aee97b
+estimatepi2(10_000_000)
 
 # ╔═╡ 41b19e20-4d0f-11eb-1c3c-572cc5243d99
 
@@ -891,8 +903,12 @@ Your function returns `true` if the password matches the requirements and a `fal
 
 # ╔═╡ d286cd36-27ea-405f-b54e-e97c2d0bbcba
 function check_password(pwd)
-
-	return missing
+	length(pwd) ≥ 6 && 
+	count(isletter, pwd) ≥ 2 &&
+	count(islowercase, pwd) ≥ 1 &&
+	count(isuppercase, pwd) ≥ 1 && 
+	count(isdigit, pwd) ≥ 1 &&
+	count(c -> !isdigit(c) && !isdigit(c), pwd) ≥ 1
 end
 
 # ╔═╡ 17d3ba29-d492-4ba4-88ac-4689330d023f
@@ -938,7 +954,18 @@ Hints:
 
 # ╔═╡ 75d14674-58ba-11eb-3868-172fc00a0eb8
 function markdowntable(table, header)
-	missing
+	@assert length(header) == size(table,2)
+	@show table_of_strings = repr.(table)
+	@show full_table = vcat(header', table_of_strings)
+	@show max_width_cols = maximum(length.(full_table),dims=1)
+	table_of_strings
+end
+
+# ╔═╡ 3bb0c318-f15e-467c-aede-07f144aca8e1
+begin
+	header = [ "This", "is", "a", "table" ]
+	table = [ 5 10 10 3; 9 3 1 3; 8 4 7 6 ]
+	println(markdowntable(table,header)) 
 end
 
 # ╔═╡ 8c5da051-f397-4613-97aa-2d673e03ea7b
@@ -2419,6 +2446,7 @@ version = "17.4.0+2"
 # ╟─ee9069e2-63a7-11eb-12b9-97ae270506f4
 # ╟─57b9de0f-acfb-49ef-9216-e7d9a2685071
 # ╟─bb5aa3d3-fe95-479b-905f-f546a3e16309
+# ╠═f35d00bb-76f5-4fc4-92f5-9bb572f0c064
 # ╠═3de1f1aa-58bd-11eb-2ffc-0de292b13840
 # ╠═5f47cdf0-58be-11eb-1bca-a3d0941b9bea
 # ╟─6d43af49-f127-4ffe-ba97-0f04fb792efb
@@ -2432,6 +2460,8 @@ version = "17.4.0+2"
 # ╟─e5293248-64a4-11eb-0d30-53a15bec0d01
 # ╠═cb20fffe-58cf-11eb-1b65-49699f2d3699
 # ╠═cee388d2-58cf-11eb-3b88-971b4b85e957
+# ╠═0882a9ad-66e4-491d-8327-e0b11f82a3a1
+# ╠═4628d107-7b20-43be-b6d0-454020aee97b
 # ╟─be4c9bbe-0ec1-4477-b422-dcf308cd6f5b
 # ╟─41b19e20-4d0f-11eb-1c3c-572cc5243d99
 # ╟─a5c5910c-1a70-4e70-be5f-08ebe6790c19
@@ -2442,6 +2472,7 @@ version = "17.4.0+2"
 # ╟─04aff640-58bb-11eb-1bb6-69ad9fc32314
 # ╟─5c8f024f-87a3-444f-8f09-5d179a04a1cb
 # ╠═75d14674-58ba-11eb-3868-172fc00a0eb8
+# ╠═3bb0c318-f15e-467c-aede-07f144aca8e1
 # ╟─cf2b6aa4-b0e8-471a-95fc-646bbddb989a
 # ╟─8c5da051-f397-4613-97aa-2d673e03ea7b
 # ╠═9f1a2834-4d0f-11eb-3c3e-b7ff55f65dd3
