@@ -163,7 +163,15 @@ ex = :(a + b * c + 1)
 typeof(ex)
 
 # ╔═╡ 67954702-5e5a-11eb-1ab1-e9a285ee208d
-ex.args
+ex.args # sum of 3 arguments??
+
+# ╔═╡ 72cdf8a5-5c56-46f1-9b09-fd77293c0739
+for x in ex.args
+	println(x,": ", typeof(x))
+end
+
+# ╔═╡ b0f7114f-fe04-460b-a8f0-7dc52a0ddfa7
+ex.args[3].args
 
 # ╔═╡ 66c113d0-5e5d-11eb-0aab-b3fa7f98eae5
 md"""
@@ -1974,6 +1982,8 @@ version = "1.8.1+0"
 # ╠═917a579c-5e5a-11eb-3fe6-cb0dcad5e4e6
 # ╠═82d3220a-5e5a-11eb-3c49-d5e7afb1af2a
 # ╠═67954702-5e5a-11eb-1ab1-e9a285ee208d
+# ╠═72cdf8a5-5c56-46f1-9b09-fd77293c0739
+# ╠═b0f7114f-fe04-460b-a8f0-7dc52a0ddfa7
 # ╟─66c113d0-5e5d-11eb-0aab-b3fa7f98eae5
 # ╠═6fc2fb9c-5e5d-11eb-0f21-6524555a9c42
 # ╠═6dab1d58-5e5d-11eb-3381-a1796f8d14c5
