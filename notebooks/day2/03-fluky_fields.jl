@@ -25,7 +25,7 @@ using Plots, RecipesBase
 # ╔═╡ 347583c6-9ed6-42af-b760-733585dbb7a6
 # edit the code below to set your name and UGent username
 
-student = (name = "Jimmy Janssen", email = "Jimmy.Janssen@UGent.be");
+student = (name = "Michiel Huttener", email = "Michiel.Huttener@UGent.be");
 
 # press the ▶ button in the bottom right of this cell to run your edits
 # or use Shift+Enter
@@ -62,6 +62,23 @@ It took some iterations, but Daisy has provided you with a detailed sowing plan,
 *$(shape_type)*:
 """
 
+# ╔═╡ 873c29b7-3ad0-4d90-9773-5c53d7810ef1
+abstract type Shape end
+
+# ╔═╡ 988a3c32-2402-4962-b6e3-cdb589c0c87c
+struct Circle <: Shape
+	x::Float64
+	y::Float64
+	R::Float64
+	Circle(x,y,R) = new(x,y,R)
+	function Circle(t::NamedTuple{(:x, :y, :R), Tuple{Float64,Float64,Float64}})
+		 new(t.x, t.y, t.R)
+	end
+end
+
+# ╔═╡ a193d8b0-7df8-4fe3-8fdf-2a09f7b09e53
+
+
 # ╔═╡ 4826f7b8-0922-4a2d-abd4-426aa43c293a
 md"""
 The problem is that daisy does not know how many seeds to buy. However, she is an experienced gardener and only needs to know an estimation of the surface area that needs sowing.
@@ -74,13 +91,12 @@ The problem is that daisy does not know how many seeds to buy. However, she is a
 """
 
 # ╔═╡ 409d0d25-bae3-45ed-9ba1-477fcf928bce
-
-
-# ╔═╡ a7fdf0f3-4810-4c9c-8fd5-e144b602d209
-
+function area(c::Circle)
+	c.R^2 * π
+end
 
 # ╔═╡ 59949c0b-4a6e-4237-9b1d-5a674f4849bd
-
+Base.isless(c1::Circle, c2::Circle) = c1.R < c2.R # this is not lawful
 
 # ╔═╡ 3bdf0670-2511-4fd6-be39-8d22c2945d4c
 md"""
@@ -93,17 +109,50 @@ Crisis! Daisy realises that the shapes she has drawn are overlapping and the pre
 > **Optional:** count the number of shapes that lie *completely* in another shape.
 """
 
-# ╔═╡ 5949a413-705d-477b-8091-d517f09095de
-
-
 # ╔═╡ 4a507508-0532-4659-94b4-7a04bdd91fe0
-
+function isdisjoint(c1::Circle, c2::Circle) 
+	distance2 = (c1.x-c2.x)^2 + (c1.y-c2.y)^2
+	radii2 = (c1.R + c2.R)^2
+	return radii2 < distance2
+end
 
 # ╔═╡ 4b29599d-d30e-4bdf-a150-d2e47e76908c
+@recipe function f(c::Circle)
+    seriestype := :shape
+	color := :orange
+	fillalpha := 0.3
+	legend := false
+	aspect_ratio := :equal
+	
+    r = c.R
+    θ = range(0, 2π, length=100)
+    x = c.x .+ c.R .* cos.(θ)
+    y = c.y .+ c.R .* sin.(θ)
+	
+    x, y
+end
 
+# ╔═╡ 8bd1a62c-2fcd-44d4-a120-8f30e50054d5
+@recipe function f(cs::AbstractVector{<:Circle})
+    seriestype := :shape
+	color := :orange
+	fillalpha := 0.3
+	legend := false
+	aspect_ratio := :equal
+	
+    xdata = []
+    ydata = []
 
-# ╔═╡ c2055a02-3f86-4b16-936b-927493a89ce8
+    θ = range(0, 2π, length=100)
+    for c in cs
+        x = c.x .+ c.R .* cos.(θ)
+        y = c.y .+ c.R .* sin.(θ)
+        push!(xdata, x)
+        push!(ydata, y)
+    end
 
+    xdata, ydata
+end
 
 # ╔═╡ faf30153-b607-48d1-8db0-1f47e2e1e62e
 md"""
@@ -117,25 +166,16 @@ md"""
 """
 
 # ╔═╡ bc31c109-3a11-46b1-bc5a-5872d0cb73bd
-n_points = 100_000
+n_points = 1000_000
 
 # ╔═╡ 47d9f887-a7e0-42e0-ad27-53b6d5b8adb2
-points = missing
+points = 100 .* rand(Float64,(2,n_points))
 
 # ╔═╡ e1a4741f-415d-4a61-8ff5-a8454607d437
-
+Base.in(p::Tuple{Float64,Float64},c::Circle) = (c.x - p[1])^2 + (c.y - p[2])^2 ≤ c.R^2
 
 # ╔═╡ 8f7fb0c4-ba18-4025-b322-62c2d17aced8
-
-
-# ╔═╡ a70e9d92-c098-49e1-bb8f-4adfc55a6c98
-
-
-# ╔═╡ 95fecfbd-6969-498b-b909-ac945a4e9fbd
-
-
-# ╔═╡ b8faefbe-fb08-46cb-b349-5d2fd25cdf05
-
+(0.0,0.0) ∈ Circle(1,1,2)
 
 # ╔═╡ 2a772d03-5972-4da5-8da8-adf7626db801
 md"## Data generation ⚙️"
@@ -189,7 +229,28 @@ shapes = shape_type=="circles" ? circles : (shape_type=="rectangles" ? rectangle
 shapes
 
 # ╔═╡ de71232a-1498-4db1-8fc3-65a84a93551a
-first(shapes)
+first(shapes).x
+
+# ╔═╡ a7fdf0f3-4810-4c9c-8fd5-e144b602d209
+shapes .|> Circle .|> area |> sum
+
+# ╔═╡ 5ce2dfec-cac3-4867-9874-150b4e2ef079
+sort!(shapes .|> Circle, by=(c -> c.R))
+
+# ╔═╡ c2055a02-3f86-4b16-936b-927493a89ce8
+plot(Circle(first(shapes)))
+
+# ╔═╡ 1e1cd1ef-b22e-4a82-b982-3117bc4d123b
+cs = shapes .|> Circle
+
+# ╔═╡ 5a4ce8f3-69b6-498b-893f-9d93bc1ee290
+plot(cs)
+
+# ╔═╡ a70e9d92-c098-49e1-bb8f-4adfc55a6c98
+a = count([any([(points[1,i], points[2,i]) ∈ c for c ∈ cs]) for i ∈ 1:n_points])
+
+# ╔═╡ 95fecfbd-6969-498b-b909-ac945a4e9fbd
+a / n_points # approximation of percentage of coverage (within the field)
 
 # ╔═╡ 73503bf0-5dc8-4cc5-a636-e6521ef3089e
 md"""
@@ -1368,19 +1429,25 @@ version = "1.8.1+0"
 # ╟─2ff01603-4322-4571-b172-20b9952ff4ff
 # ╟─7470865e-87e2-4e40-8cb5-e27b516ce976
 # ╟─9731ecc2-a3bf-47bc-8385-96147b0ddbd0
+# ╠═873c29b7-3ad0-4d90-9773-5c53d7810ef1
+# ╠═988a3c32-2402-4962-b6e3-cdb589c0c87c
+# ╠═a193d8b0-7df8-4fe3-8fdf-2a09f7b09e53
 # ╠═9c443e96-d40c-4c9d-a0b3-3390e18911df
 # ╠═de71232a-1498-4db1-8fc3-65a84a93551a
 # ╟─4826f7b8-0922-4a2d-abd4-426aa43c293a
 # ╠═409d0d25-bae3-45ed-9ba1-477fcf928bce
 # ╠═a7fdf0f3-4810-4c9c-8fd5-e144b602d209
 # ╠═59949c0b-4a6e-4237-9b1d-5a674f4849bd
+# ╠═5ce2dfec-cac3-4867-9874-150b4e2ef079
 # ╟─3bdf0670-2511-4fd6-be39-8d22c2945d4c
-# ╠═5949a413-705d-477b-8091-d517f09095de
 # ╠═4a507508-0532-4659-94b4-7a04bdd91fe0
 # ╟─8b19a9e4-5701-4e45-85a6-8e9d3b93563f
 # ╠═59c37c98-9a9a-4bbc-9809-26360ead8e45
 # ╠═4b29599d-d30e-4bdf-a150-d2e47e76908c
 # ╠═c2055a02-3f86-4b16-936b-927493a89ce8
+# ╠═8bd1a62c-2fcd-44d4-a120-8f30e50054d5
+# ╠═5a4ce8f3-69b6-498b-893f-9d93bc1ee290
+# ╠═1e1cd1ef-b22e-4a82-b982-3117bc4d123b
 # ╟─faf30153-b607-48d1-8db0-1f47e2e1e62e
 # ╠═bc31c109-3a11-46b1-bc5a-5872d0cb73bd
 # ╠═47d9f887-a7e0-42e0-ad27-53b6d5b8adb2
@@ -1388,7 +1455,6 @@ version = "1.8.1+0"
 # ╠═8f7fb0c4-ba18-4025-b322-62c2d17aced8
 # ╠═a70e9d92-c098-49e1-bb8f-4adfc55a6c98
 # ╠═95fecfbd-6969-498b-b909-ac945a4e9fbd
-# ╠═b8faefbe-fb08-46cb-b349-5d2fd25cdf05
 # ╟─2a772d03-5972-4da5-8da8-adf7626db801
 # ╠═57f8656f-7c84-47cc-9da1-62c3e74c7769
 # ╠═d5c9526d-5dff-4fb2-8a2c-e96c0229f474
