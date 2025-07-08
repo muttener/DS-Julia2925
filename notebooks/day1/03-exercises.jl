@@ -28,7 +28,7 @@ using Images
 # ╔═╡ 786b3780-58ec-11eb-0dfd-41f5af6f6a39
 # edit the code below to set your name and UGent username
 
-student = (name = "Jan Janssen", email = "Jan.Janssen@UGent.be");
+student = (name = "Michiel Huttener", email = "Michiel.Huttener@UGent.be");
 
 # press the ▶ button in the bottom right of this cell to run your edits
 # or use Shift+Enter
@@ -93,7 +93,7 @@ md"""
 
 # ╔═╡ f272855c-3c9e-11eb-1919-6b7301b15699
 function mean(x)
-	return missing
+	return sum(x) / length(x)
 end
 
 # ╔═╡ 66a20628-4834-11eb-01a2-27cc2b1ec7be
@@ -132,7 +132,7 @@ $$[w_1, w_2, w_3] = [1/6, 2/6, 3/6]\, .$$
 "
 
 # ╔═╡ 88c10640-4835-11eb-14b0-abba18da058f
-weighted_mean(x, w) = missing
+weighted_mean(x, w) =  w ⋅ x
 
 # ╔═╡ 181c4246-4836-11eb-0368-61b2998f5424
 wx = collect((1:3) / sum(1:3))
@@ -181,11 +181,13 @@ hint(
 function convolve_1d(x::Vector, w::Vector)
 	@assert length(w) % 2 == 1 "length of `w` has to be odd!"
 	@assert length(w) < length(x) "length of `w` should be smaller than `x`"
-	n = missing
-	m = missing
-	y = zeros(size(x)) # initialize the output
-
-	# ... complete
+	n = length(x)
+	m = length(w) ÷ 2
+	y = zeros(n) # initialize the output
+	safe_index = i -> clamp(i,1,n)
+	for i in 1:n
+		y[i] = sum([x[safe_index(i+k)] * w[m + 1 + k] for k in -m:m])
+	end
 	return y
 end
 
@@ -244,8 +246,7 @@ m₁ = 3
 
 # ╔═╡ 7c12bcf6-4863-11eb-0994-fb7d763c0d47
 function uniform_weights(m)
-	# complete and replace [0.0]
-	return [0.0]
+	return ones(2m+1)./(2m+1)
 end
 
 # ╔═╡ 64bf7f3a-58f0-11eb-1782-0d33a2b615e0
@@ -268,9 +269,9 @@ md"""
 
 # ╔═╡ 294140a4-2bf0-11eb-22f5-858969a4640d
 function triangle_weights(m)
-	w = zeros(2m+1)
-	# complete and replace [0.0]
-	return [0.0]
+	w = [min(k, 2m+2-k) for k in 1:2m+1]
+	norm = (m+1)*(2m+2)/2
+	return w./norm
 end	
 
 # ╔═╡ 91c7e17b-28a5-44ed-8c92-ee8a36d71a69
@@ -292,7 +293,8 @@ md"""
 # ╔═╡ d8c7baac-49be-11eb-3afc-0fedae12f74f
 function gaussian_weights(m; σ=4)
 	# complete and replace [0.0]
-	return [0.0]
+	w = [ exp(- (i-m-1)^2)/2σ^2 for i ∈ 1:2m+1]
+	return w./sum(w)
 end
 
 # ╔═╡ 2b8cbdc9-4c6d-44c9-8dae-47487a01f577
@@ -419,7 +421,7 @@ md"To be topical, let us try it on the tail spike protein of the SARS-CoV-2 viru
 spike_sars2 = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHVSGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFLGVYYHKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLEGKQGNFKNLREFVFKNIDGYFKIYSKHTPINLVRDLPQGFSALEPLVDLPIGINITRFQTLLALHRSYLTPGDSSSGWTAGAAAYYVGYLQPRTFLLKYNENGTITDAVDCALDPLSETKCTLKSFTVEKGIYQTSNFRVQPTESIVRFPNITNLCPFGEVFNATRFASVYAWNRKRISNCVADYSVLYNSASFSTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGKIADYNYKLPDDFTGCVIAWNSNNLDSKVGGNYNYLYRLFRKSNLKPFERDISTEIYQAGSTPCNGVEGFNCYFPLQSYGFQPTNGVGYQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVNFNFNGLTGTGVLTESNKKFLPFQQFGRDIADTTDAVRDPQTLEILDITPCSFGGVSVITPGTNTSNQVAVLYQDVNCTEVPVAIHADQLTPTWRVYSTGSNVFQTRAGCLIGAEHVNNSYECDIPIGAGICASYQTQTNSPRRARSVASQSIIAYTMSLGAENSVAYSNNSIAIPTNFTISVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLNRALTGIAVEQDKNTQEVFAQVKQIYKTPPIKDFGGFNFSQILPDPSKPSKRSFIEDLLFNKVTLADAGFIKQYGDCLGDIAARDLICAQKFNGLTVLPPLLTDEMIAQYTSALLAGTITSGWTFGAGAALQIPFAMQMAYRFNGIGVTQNVLYENQKLIANQFNSAIGKIQDSLSSTASALGKLQDVVNQNAQALNTLVKQLSSNFGAISSVLNDILSRLDKVEAEVQIDRLITGRLQSLQTYVTQQLIRAAEIRASANLAATKMSECVLGQSKRVDFCGKGYHLMSFPQSAPHGVVFLHVTYVPAQEKNFTTAPAICHDGKAHFPREGVFVSNGTHWFVTQRNFYEPQIITTDNTFVSGNCDVVIGIVNNTVYDPLQPELDSFKEELDKYFKNHTSPDVDLGDISGINASVVNIQKEIDRLNEVAKNLNESLIDLQELGKYEQYIKWPWYIWLGFIAGLIAIVMVTIMLCCMTSCCSCLKGCCSCGSCCKFDEDDSEPVLKGVKLHYT"
 
 # ╔═╡ 7e96f0d6-5999-11eb-3673-43f7f1fa0113
-m = 5
+m = 10
 
 # ╔═╡ 3e40ce8d-612d-4ead-be99-7cbb0f7e242d
 md"""
@@ -435,11 +437,14 @@ hint(md"Try to increase the window size for clearer results.")
 
 # ╔═╡ c23ff59c-3ca1-11eb-1a31-2dd522b9d239
 function protein_sliding_window(sequence, m, zscales)
-	return missing
+	convolve_1d(map(c -> zscales[c], collect(sequence)),uniform_weights(m))
 end
 
 # ╔═╡ 17e7750e-49c4-11eb-2106-65d47b16308c
 proteinsw = protein_sliding_window(spike_sars2, m, zscales3)
+
+# ╔═╡ 3751feff-b982-4a7b-9a4c-d6a3a6be3ce4
+plot(proteinsw)
 
 # ╔═╡ 236f1ee8-64e2-11eb-1e60-234754d2c10e
 
@@ -538,10 +543,11 @@ md"""
 hint(md"`1:n:end` takes every `n`-th index in a matrix")
 
 # ╔═╡ 13807912-5a8f-11eb-3ca2-09030ee978ab
-decimate(image, ratio=5) = missing
+decimate(image, ratio=5) = 
+	image[1:ratio:end,1:ratio:end]
 
 # ╔═╡ 6d5de3b8-5dbc-11eb-1fc4-8df16c6c04b7
-bird = decimate(bird_original, 6)
+bird = decimate(bird_original,6)
 
 # ╔═╡ dd2d6fde-0e64-4032-9c81-16aa368ce084
 typeof(bird_original)
@@ -586,8 +592,17 @@ md"""
 function convolve_2d(M::Matrix, K::Matrix)
 	out = similar(M)
 	n_rows, n_cols = size(M)
-	#...
-	return missing
+	m_rows_full, m_cols_full = size(K)
+	@assert isodd(m_rows_full)
+	@assert isodd(m_cols_full)
+	m_rows = m_rows_full ÷ 2
+	m_cols = m_cols_full ÷ 2
+	safe_row_index = i -> clamp(i,1,n_rows)
+	safe_col_index = i -> clamp(i,1,n_cols)
+	for (i,j,val) in enumerate(M)
+		out[i,j] = sum([x[safe_row_index(i+k),safe_row_index(j+l)] * w[m_rows + 1 + k, m_cols + 1 + k] for k in -m_rows:m_rows, l in -m_cols:m_cols])
+	end
+	return out
 end
 
 # ╔═╡ 7d4c40d6-2aa3-4246-8554-bef080109f19
@@ -824,7 +839,7 @@ hint(md"Don't worry if you don't get fully understand the oneliner, it is bitstr
 hint(md"A more naive and less efficient solution would be to convert the rule integer to a string (not a bitstring), which supports indexing. ")
 
 # ╔═╡ b43157fa-482e-11eb-3169-cf4989528800
-getbinarydigit(rule, i) = missing
+getbinarydigit(rule, i) = isodd(rule >> i)
 
 # ╔═╡ 781d38a8-59d4-11eb-28f9-9358f132782c
 [getbinarydigit(rule, i) for i in 7:-1:0]  # counting all positions
@@ -858,10 +873,10 @@ getbinarydigit(rule, 4true+2true+1true+1)
 # ╔═╡ d2e5787c-59d2-11eb-1bbd-d79672ab8f1b
 begin
 	function nextstate(l::Bool, s::Bool, r::Bool, rule::UInt8)
-		return missing
+		return getbinarydigit(rule, 4l+2s+1r)
 	end
 	
-	nextstate(l::Bool, s::Bool, r::Bool, rule::Int) = missing
+	nextstate(l::Bool, s::Bool, r::Bool, rule::Int) = nextstate(l,s,r,UInt8(rule))
 end
 
 # ╔═╡ 38e6a67c-49fa-11eb-287f-91a836f5752c
@@ -3064,6 +3079,7 @@ version = "1.9.2+0"
 # ╠═c23ff59c-3ca1-11eb-1a31-2dd522b9d239
 # ╟─085a24fb-f71d-4edb-ba8c-a3f1047c60c2
 # ╠═17e7750e-49c4-11eb-2106-65d47b16308c
+# ╠═3751feff-b982-4a7b-9a4c-d6a3a6be3ce4
 # ╟─236f1ee8-64e2-11eb-1e60-234754d2c10e
 # ╟─0b847e26-4aa8-11eb-0038-d7698df1c41c
 # ╠═ba2c4c6b-d1bc-47cc-a13e-db2e5bab414d
