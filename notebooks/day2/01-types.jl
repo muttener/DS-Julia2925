@@ -22,7 +22,7 @@ using PlutoUI; TableOfContents()
 # ╔═╡ e9576706-600e-11eb-1e10-e3bac02a254e
 # edit the code below to set your name and UGent username
 
-student = (name = "Hanne Janssen", email = "Hanne.Janssen@UGent.be");
+student = (name = "Michiel Huttener", email = "Michiel.Huttener@UGent.be");
 
 # press the ▶ button in the bottom right of this cell to run your edits
 # or use Shift+Enter
@@ -69,16 +69,16 @@ typeof(A)
 """
 
 # ╔═╡ b844d568-4e73-11eb-3de9-4158b0bdca12
-
+typeof(a)
 
 # ╔═╡ c662744a-4e73-11eb-1bfc-6daaf7282285
-
+typeof(s)
 
 # ╔═╡ cae803e2-4e73-11eb-13e0-23abccf86bac
-
+typeof(n)
 
 # ╔═╡ cc606026-4e73-11eb-3576-5d301a771a5a
-
+typeof(A)
 
 # ╔═╡ d3803112-4e73-11eb-2018-f72ffb7f6ec6
 md"These are all *concrete types*. Julia types are part of a hierarchical type system, forming a single, fully connected type graph. The concrete types are the leaves of this tree, whereas the inner nodes are *abstract types*. As hinted by the name, these are abstract and cannot be instantiated. They, however, help with conceptually ordering the type system."
@@ -87,7 +87,7 @@ md"These are all *concrete types*. Julia types are part of a hierarchical type s
 md"What is the type of `pi`?"
 
 # ╔═╡ f533012c-4e78-11eb-0f45-3b47f088c9c6
-typeofpi = missing
+typeofpi = typeof(π)
 
 # ╔═╡ f69d89ba-4e73-11eb-3ab9-9179ea7e3217
 md"Concrete types (should) have a well-defined memory layout, for example `Float64` is  encoded using 64 bits while `Float32` is encoded using 32 bits and hence some computations can be executed quicker but less precise by the former. Abstract types on the other hand mainly encode a semantic meaning, any `Real` should behave as a real number (e.g., addition, division are defined)."
@@ -115,22 +115,22 @@ supertype(Any)
 """
 
 # ╔═╡ e1c8cf4a-4e73-11eb-27be-d702064a0182
-
+supertype(Int8)
 
 # ╔═╡ e56a46c6-4e73-11eb-1748-1b6fe5ab0376
-
+supertype(Float64)
 
 # ╔═╡ e89adcaa-4e73-11eb-1ed8-e9c89ca633f6
-
+supertype(AbstractFloat)
 
 # ╔═╡ ec2ab2be-4e73-11eb-1a22-010439761432
-
+supertype(Real)
 
 # ╔═╡ efa205b4-4e73-11eb-1647-e9dcab5f7b7a
-
+supertype(Number)
 
 # ╔═╡ f3b5a778-4e73-11eb-1d3c-11ae19713eca
-
+supertype(Any)
 
 # ╔═╡ a0cecb24-4e74-11eb-3634-cd8dd628e9ec
 md"See how all the numbers are hierarchically represented? Note that any type is always a subtype of `Any`. We can check if an object is (sub)type using the function `isa` or use the `<:` operator."
@@ -158,22 +158,22 @@ If you are confused by the last statement, read the next section.
 """
 
 # ╔═╡ b31fe65a-4e74-11eb-0414-35f2be687c7f
-
+Float64 <: AbstractFloat
 
 # ╔═╡ c2ac0c48-4e74-11eb-10b0-91ad620fefcd
-
+Float16 <: AbstractFloat
 
 # ╔═╡ c5208cce-4e74-11eb-0615-135b510a9e8d
-
+AbstractFloat <: Number
 
 # ╔═╡ c817296a-4e74-11eb-0994-972871114f02
-
+Int <: Number
 
 # ╔═╡ cb066442-4e74-11eb-35e7-ed38d4bd8bbf
-
+Int <: AbstractFloat
 
 # ╔═╡ ce3d5380-4e74-11eb-3d9d-5f34cbbae118
-
+Integer isa Int
 
 # ╔═╡ 66343826-6012-11eb-109c-17c7a582cbc8
 
@@ -183,16 +183,17 @@ md"We can check the entire subtree of a type using the function `subtypetree` an
 
 
 # ╔═╡ 46eaafee-6549-11eb-2e36-c9e566d3f3ba
-function subtypetree(roottype, level=1)
-	level == 1 && println(roottype)
+function subtypetree(roottype, level=0)
+	level == 0 && println(roottype)
+	level += 1
 	for s in subtypes(roottype)
-			println(" "^((level-1)*4) * string(s))
-			subtypetree(s, level + 1)
+			println(" "^(level*4) * string(s))
+			subtypetree(s, level)
 	end
 end
 
 # ╔═╡ 6cbd4874-6549-11eb-296e-af4a43d53223
-subtypetree(Real)
+subtypetree(Number)
 
 # ╔═╡ 4a01487c-4e78-11eb-1302-d9c6ec4ed6ab
 md"""
@@ -219,6 +220,9 @@ md"We have seen that you can add any type of float with any type of integer (dit
 
 # ╔═╡ 99228eee-5b24-11eb-385e-7507ca20ae0e
 promote(7.9, 79)
+
+# ╔═╡ 12ffef22-6691-417e-93a9-79f5acc580f0
+typeof(promote(7.9, 79))
 
 # ╔═╡ 03133d24-6621-11eb-03d3-bb8970ab19f7
 promote_type(Float64, Int)  # find common type
@@ -265,7 +269,14 @@ bunchofnumbers = "1.728002758512114, 0.45540258865644284, 1.4067738604851092, 1.
 "
 
 # ╔═╡ e6f31ad8-4e79-11eb-11f4-2936cb039f8d
-sumofbunchofnumbers = missing
+sumofbunchofnumbers = 
+	(bunchofnumbers |> 
+		rstrip |>
+		(s -> split(s, ", ")) .|> 
+		(s -> parse(Float64,s)) |> 
+		sum
+	)
+
 
 # ╔═╡ 03766a5c-4e75-11eb-12ad-cb2e9468e0d2
 md"""
@@ -292,13 +303,13 @@ md"""
 mynewfun(x) = x^2 .+ x
 
 # ╔═╡ 7c2b6dc0-4e76-11eb-1d78-553df82d9100
-
+@time mynewfun(1)
 
 # ╔═╡ d2a4a32c-5b02-11eb-3839-8108c4965931
-
+@time mynewfun(1.0)
 
 # ╔═╡ 32d64b6e-4e75-11eb-0a2a-27214f217f70
-
+@time mynewfun(A)
 
 # ╔═╡ 861ba4c6-4e76-11eb-3d2b-bfabbd143df2
 md"The known methods can be found using the function `methods`. For example, look how many methods are defined for sum:"
@@ -316,7 +327,7 @@ md"""
 		"""
 
 # ╔═╡ b18d0532-4e76-11eb-2e8a-2bee580533cc
-
+methods(*)
 
 # ╔═╡ b3d15950-6015-11eb-1909-c127822a4a83
 
@@ -347,16 +358,16 @@ begin
 end
 
 # ╔═╡ ff755bf8-4e76-11eb-205f-d52529ae50ed
-
+methods(twice)
 
 # ╔═╡ 03932e5e-4e77-11eb-3769-635cc33c3c4d
-
+twice(10) 
 
 # ╔═╡ 0b4f99ea-4e77-11eb-29fc-632788d179a3
-
+twice(10.0)
 
 # ╔═╡ 2a0b220a-4e77-11eb-1da7-2978422c11f4
-
+twice("A griffin! ")
 
 # ╔═╡ bf91e40a-4e77-11eb-14f1-754b1ce5130e
 md"> Julia will always select the method with the most specific type signature.
@@ -405,34 +416,34 @@ md"""
 		"""
 
 # ╔═╡ 76fe9fc4-4e77-11eb-3bc7-2dfbdff8dfc8
-
+f(1, 2.0) # Int - Float64
 
 # ╔═╡ 7aa14c94-4e77-11eb-25c7-fb0103267b06
-
+f(1.0, 2) # Float64 - (Int -> Real)
 
 # ╔═╡ 7f3a5336-4e77-11eb-2ad6-3d889dc75ac0
-
+f(Int8(1), Int8(2)) # (Int8 -> Integer) - (Int8 -> Real)
 
 # ╔═╡ 822c01d4-4e77-11eb-1409-fbaf83c950b6
-
+f(1.0, 2.0) # Float64 - Float64
 
 # ╔═╡ 85f186a6-4e77-11eb-19ca-5db29615ba97
-
+f("one", 2) # Default
 
 # ╔═╡ 891c820e-4e77-11eb-1ebf-b3065e0d4211
-
+f("one", "two") # Default with same type
 
 # ╔═╡ 8d0d39c4-4e77-11eb-034d-07dc33ab6e9a
-
+f(1, Float32(2.0)) # (Int8 -> Integer) - (Float32 -> Real)
 
 # ╔═╡ 901efaee-4e77-11eb-02d9-b5fe1f0931d5
-
+f(1, 2) # Int - Int
 
 # ╔═╡ 938d8b1e-4e77-11eb-03d3-9b88c7cab3c1
-
+f([1 1; 1 1], [2.0 2.0; 2.0 2.0]) # Default
 
 # ╔═╡ 96f6fef2-4e77-11eb-2ec4-399472d86a60
-
+f([1 1; 1 1], [2 2; 2 2]) # Default with same type
 
 # ╔═╡ 812cfe48-4e7a-11eb-32e6-c918bbe3e602
 md"""
@@ -594,6 +605,8 @@ begin
 	abstract type Rock <: Hand end
 	abstract type Paper <: Hand end
 	abstract type Scissors <: Hand end
+	abstract type Spock <: Hand end
+	abstract type Lizard <: Hand end
 end
 
 # ╔═╡ cba6d4cc-5b03-11eb-265d-3f08117b0e8d
@@ -602,13 +615,27 @@ md"Now we implement a function to play one hand against an opponent's hand."
 # ╔═╡ d913cd92-4e7c-11eb-11e1-3d7539af7fed
 begin
 	play(h1::Type{Paper}, h2::Type{Rock}) = 1
+	play(h1::Type{Paper}, h2::Type{Spock}) = 1
 	play(h1::Type{Rock}, h2::Type{Scissors}) = 1
+	play(h1::Type{Rock}, h2::Type{Lizard}) = 1
+	play(h1::Type{Lizard}, h2::Type{Spock}) = 1
+	play(h1::Type{Lizard}, h2::Type{Paper}) = 1
+	play(h1::Type{Spock}, h2::Type{Scissors}) = 1
+	play(h1::Type{Spock}, h2::Type{Rock}) = 1
+	play(h1::Type{Scissors}, h2::Type{Lizard}) = 1
 	play(h1::Type{Scissors}, h2::Type{Paper}) = 1
 	
 	# this captures both when same inputs are given and
 	# when the first person looses
 	play(h1::Type{<:Hand}, h2::Type{<:Hand}) = h1 == h2 ? 0 : -1
+	
+	# this captures both when same inputs are given and
+	# when the first person looses
+	play(h1::Type{<:Hand}, h2::Type{<:Hand}) = h1 == h2 ? 0 : -1
 end
+
+# ╔═╡ ebb74f55-e65b-406d-9861-ea9a08387dee
+typeof(Rock)
 
 # ╔═╡ 4f107d88-4e7d-11eb-3e49-f54ecf5163da
 play(Rock, Rock)
@@ -632,9 +659,6 @@ Can you extend the previous code so that it works with lizard an Spock?
 
 adapted from: [source](https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwordpress.morningside.edu%2Fcdl001%2Ffiles%2F2010%2F09%2FRockPaperScissorsLizardSpock.jpg&f=1&nofb=1)
 """
-
-# ╔═╡ 269b934c-601b-11eb-00ad-5fec0e2c37e1
-
 
 # ╔═╡ ce5d564a-f2f3-4b1e-aa70-85253b2ccf38
 md"""## Answers:
@@ -1007,6 +1031,7 @@ version = "17.4.0+2"
 # ╠═cd32e96c-4e78-11eb-0b48-5767421c7875
 # ╟─40a761c2-5b24-11eb-09a8-a5cd0bc4ab95
 # ╠═99228eee-5b24-11eb-385e-7507ca20ae0e
+# ╠═12ffef22-6691-417e-93a9-79f5acc580f0
 # ╠═03133d24-6621-11eb-03d3-bb8970ab19f7
 # ╟─ba39991a-5b24-11eb-260b-439bcde4c153
 # ╠═35e53434-5b25-11eb-10b7-e993e9477c8c
@@ -1081,12 +1106,12 @@ version = "17.4.0+2"
 # ╠═99c4f3c8-4e7c-11eb-3d4a-33ba8d495eb2
 # ╟─cba6d4cc-5b03-11eb-265d-3f08117b0e8d
 # ╠═d913cd92-4e7c-11eb-11e1-3d7539af7fed
+# ╠═ebb74f55-e65b-406d-9861-ea9a08387dee
 # ╠═4f107d88-4e7d-11eb-3e49-f54ecf5163da
 # ╠═8331c8b0-4e7d-11eb-0690-8bbae3ed086a
 # ╠═88a95ec0-4e7d-11eb-0a33-77ef82874f45
 # ╠═925e2f40-4e7d-11eb-0bd2-f91913c5a23e
 # ╟─629e7829-d214-4406-a082-aa1f82cb539c
-# ╠═269b934c-601b-11eb-00ad-5fec0e2c37e1
 # ╟─3cf6dffd-d91e-465a-94bb-0ffe6b5152aa
 # ╟─ce5d564a-f2f3-4b1e-aa70-85253b2ccf38
 # ╟─00000000-0000-0000-0000-000000000001
