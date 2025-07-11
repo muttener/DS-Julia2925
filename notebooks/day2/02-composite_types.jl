@@ -732,7 +732,7 @@ max(money_harry,money_ron)
 
 # ╔═╡ dc945902-5d93-11eb-1121-a7ae99c5862e
 LinearAlgebra.det(V::Vandermonde) = 
-	prod([i < j ? V.α[j] - V.α[i] : 1 for i in 1:(V.m), j in 1:V.m])
+	prod([V.α[j] - V.α[i] for i in 1:(V.m), j in 1:V.m if i < j])
 
 # ╔═╡ a15e7b4e-fdda-4989-9e25-4fcb29fefab8
 LinearAlgebra.det(V)
