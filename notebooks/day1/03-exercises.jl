@@ -421,7 +421,7 @@ md"To be topical, let us try it on the tail spike protein of the SARS-CoV-2 viru
 spike_sars2 = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHVSGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFLGVYYHKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLEGKQGNFKNLREFVFKNIDGYFKIYSKHTPINLVRDLPQGFSALEPLVDLPIGINITRFQTLLALHRSYLTPGDSSSGWTAGAAAYYVGYLQPRTFLLKYNENGTITDAVDCALDPLSETKCTLKSFTVEKGIYQTSNFRVQPTESIVRFPNITNLCPFGEVFNATRFASVYAWNRKRISNCVADYSVLYNSASFSTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGKIADYNYKLPDDFTGCVIAWNSNNLDSKVGGNYNYLYRLFRKSNLKPFERDISTEIYQAGSTPCNGVEGFNCYFPLQSYGFQPTNGVGYQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVNFNFNGLTGTGVLTESNKKFLPFQQFGRDIADTTDAVRDPQTLEILDITPCSFGGVSVITPGTNTSNQVAVLYQDVNCTEVPVAIHADQLTPTWRVYSTGSNVFQTRAGCLIGAEHVNNSYECDIPIGAGICASYQTQTNSPRRARSVASQSIIAYTMSLGAENSVAYSNNSIAIPTNFTISVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLNRALTGIAVEQDKNTQEVFAQVKQIYKTPPIKDFGGFNFSQILPDPSKPSKRSFIEDLLFNKVTLADAGFIKQYGDCLGDIAARDLICAQKFNGLTVLPPLLTDEMIAQYTSALLAGTITSGWTFGAGAALQIPFAMQMAYRFNGIGVTQNVLYENQKLIANQFNSAIGKIQDSLSSTASALGKLQDVVNQNAQALNTLVKQLSSNFGAISSVLNDILSRLDKVEAEVQIDRLITGRLQSLQTYVTQQLIRAAEIRASANLAATKMSECVLGQSKRVDFCGKGYHLMSFPQSAPHGVVFLHVTYVPAQEKNFTTAPAICHDGKAHFPREGVFVSNGTHWFVTQRNFYEPQIITTDNTFVSGNCDVVIGIVNNTVYDPLQPELDSFKEELDKYFKNHTSPDVDLGDISGINASVVNIQKEIDRLNEVAKNLNESLIDLQELGKYEQYIKWPWYIWLGFIAGLIAIVMVTIMLCCMTSCCSCLKGCCSCGSCCKFDEDDSEPVLKGVKLHYT"
 
 # ╔═╡ 7e96f0d6-5999-11eb-3673-43f7f1fa0113
-m = 10
+m = 15
 
 # ╔═╡ 3e40ce8d-612d-4ead-be99-7cbb0f7e242d
 md"""
@@ -599,8 +599,10 @@ function convolve_2d(M::Matrix, K::Matrix)
 	m_cols = m_cols_full ÷ 2
 	safe_row_index = i -> clamp(i,1,n_rows)
 	safe_col_index = i -> clamp(i,1,n_cols)
-	for (i,j,val) in enumerate(M)
-		out[i,j] = sum([x[safe_row_index(i+k),safe_row_index(j+l)] * w[m_rows + 1 + k, m_cols + 1 + k] for k in -m_rows:m_rows, l in -m_cols:m_cols])
+	for i ∈ 1:n_rows
+		for j ∈ 1:n_cols
+			out[i,j] = sum([M[safe_row_index(i+k),safe_row_index(j+l)] * K[m_rows + 1 + k, m_cols + 1 + k] for k in -m_rows:m_rows, l in -m_cols:m_cols])
+		end
 	end
 	return out
 end
@@ -621,7 +623,8 @@ md"""
 
 # ╔═╡ f5574a90-5a90-11eb-3100-dd98e3375390
 function gaussian_kernel(m; σ=4)
-	return missing
+	  K = [exp(-(x^2 + y^2) / 2σ^2) for x in -m:m, y in -m:m]
+	return K ./= sum(K)
 end
 
 # ╔═╡ 2286d0a6-1413-4b30-8436-712e0ddf6767
@@ -630,6 +633,9 @@ md"""
 >
 > Explore the Gaussian kernel by plotting a `heatmap` of this kernel for a given number of weights and σ.
 """
+
+# ╔═╡ 7d94d636-42e9-4237-b311-1a8660a88dac
+heatmap(gaussian_kernel(20;σ=8))
 
 # ╔═╡ 414c791d-b0e3-4a54-b1cc-634553b355be
 hint(md"""
@@ -676,14 +682,17 @@ You can easily convert an argument of a function by piping it into a type:
 
 # ╔═╡ ca0748ee-5e2e-11eb-0199-45a98c0645f2
 function convolve_image(M::Matrix{<:AbstractRGB}, K::Matrix)
-	return missing
+	reds = convolve_2d(red.(M) .|> Float32, K)
+	greens = convolve_2d(green.(M) .|> Float32, K)
+	blues = convolve_2d(blue.(M) .|> Float32, K)
+	return RGB.(reds, greens, blues)
 end
 
 # ╔═╡ 1e97c530-5a8f-11eb-14b0-47e7e944cba1
-#bird
+size(bird)
 
 # ╔═╡ f58d5af4-5a90-11eb-3d93-5712bfd9920a
-#convolve_image(bird, K_gaussian)
+convolve_image(bird, gaussian_kernel(5))
 
 # ╔═╡ 9879be7d-0c14-4922-a33f-53afb7f239b8
 
@@ -756,8 +765,14 @@ end
 
 # ╔═╡ 52a87820-5e35-11eb-0392-85957277f21a
 function edge_detection(M)
-	return missing
+	K_x = [1 0 -1; 2 0 -2; 1 0 -1]
+	K_y = [1 2 1; 0 0 0; -1 -2 -1]
+	M = M .|> Gray .|> Float64
+	return abs.(convolve_2d(M,K_x)) + abs.(convolve_2d(M,K_y)) .|> Gray
 end
+
+# ╔═╡ 9bfd4e72-529e-47f7-ab0e-619945f91464
+edge_detection(bird)
 
 # ╔═╡ 51c4d953-1892-4654-975b-9fc6f3e3114b
 
@@ -939,11 +954,17 @@ hint(md"""`similar(x)` is a useful function to initialise a new matrix of the sa
 
 # ╔═╡ 924461c0-2bf3-11eb-2390-71bad2541463
 function update1dca!(xnew, x, rule::Integer)
-	return missing
+	n = length(x)
+	xnew[1] = nextstate(x[n], x[1], x[2], rule)
+	for i in 2:n-1
+		xnew[i] = nextstate(x[i-1], x[i], x[i+1], rule)
+	end
+	xnew[n] = nextstate(x[n-1], x[n], x[1], rule)
+	return xnew
 end
 
 # ╔═╡ 21440956-2bf5-11eb-0860-11127d727282
-update1dca(x, rule::Integer) = missing
+update1dca(x, rule::Integer) = update1dca!(similar(x), x, rule)
 
 # ╔═╡ 405a1036-2bf5-11eb-11f9-a1a714dbf7e1
 x0_ca = rand(Bool, 100)
@@ -972,23 +993,30 @@ hint(md"""`similar(x)` is a useful function to initialise a new matrix of the sa
 hint(md"""`Gray(x)` returns the gray component of a color. Try,  `Gray(0)`, `Gray(1)`""")	
 
 # ╔═╡ 756ef0e0-2bf5-11eb-107c-8d1c65eacc45
-"""
+md"""
     simulate(x0, rule; nsteps=100)
 
 Simulate `nsteps` time steps according to `rule` with `X0` as the initial condition.
 Returns a matrix X, where the rows are the state vectors at different time steps.
 """
-function simulate(x0, rule::UInt8; nsteps=100)
+
+# ╔═╡ 1e954113-af7b-41bf-b320-e219d8314296
+function simulate(x0, rule::Int; nsteps=100)
 	n = length(x0)
-    X = zeros(Bool, nsteps+1, n)
-    return missing
+    X = [x0' ; zeros(Bool, nsteps, n)]
+    for t in 1:nsteps
+		x = @view X[t,:]
+		xnew = @view X[t+1,:]
+		update1dca!(xnew, x, rule)
+	end
+	return X
 end
 
 # ╔═╡ e1dd7abc-2bf5-11eb-1f5a-0f46c7405dd5
-X = simulate(x0_ca, UInt8(rule_number); nsteps=100)
+X = simulate(x0_ca, rule_number; nsteps=100)
 
 # ╔═╡ 9dbb9598-2bf6-11eb-2def-0f1ddd1e6b10
-ca_image(X) = cm.(X)
+ca_image = cm.(X)
 
 # ╔═╡ fb9a97d2-2bf5-11eb-1b92-ab884f0014a8
 
@@ -3056,7 +3084,7 @@ version = "1.9.2+0"
 # ╟─2b6303b0-cbc6-4ab2-abc5-c55793548b0e
 # ╠═c98a6330-c133-4309-a374-e897051d7bf6
 # ╠═7c12bcf6-4863-11eb-0994-fb7d763c0d47
-# ╟─64bf7f3a-58f0-11eb-1782-0d33a2b615e0
+# ╠═64bf7f3a-58f0-11eb-1782-0d33a2b615e0
 # ╟─e0188352-3771-4249-9bf1-f9c7f39ee3c8
 # ╟─6f4e6870-8d82-4b39-b2fd-9d340150a414
 # ╠═294140a4-2bf0-11eb-22f5-858969a4640d
@@ -3123,6 +3151,7 @@ version = "1.9.2+0"
 # ╟─7d4c40d6-2aa3-4246-8554-bef080109f19
 # ╠═f5574a90-5a90-11eb-3100-dd98e3375390
 # ╟─2286d0a6-1413-4b30-8436-712e0ddf6767
+# ╠═7d94d636-42e9-4237-b311-1a8660a88dac
 # ╟─414c791d-b0e3-4a54-b1cc-634553b355be
 # ╟─bfb54354-c9fc-48da-b329-960c7138e137
 # ╟─6d95b718-358c-459a-8aa7-eb687fc9fad7
@@ -3136,6 +3165,7 @@ version = "1.9.2+0"
 # ╟─9879be7d-0c14-4922-a33f-53afb7f239b8
 # ╟─62916ec1-0784-4c69-b41f-918db1037703
 # ╠═52a87820-5e35-11eb-0392-85957277f21a
+# ╠═9bfd4e72-529e-47f7-ab0e-619945f91464
 # ╟─99cf56dc-aeb3-4f8e-ae52-5b9f639f800e
 # ╟─51c4d953-1892-4654-975b-9fc6f3e3114b
 # ╠═f80ab6ba-5e2f-11eb-276c-31bbd5b0fee9
@@ -3188,7 +3218,8 @@ version = "1.9.2+0"
 # ╟─f637425d-e7f7-44d7-a8c2-4f795badc5af
 # ╟─dc013365-7620-4493-9137-739bd6f4b3e2
 # ╟─416a1d78-4582-4511-9879-5302fc7c1171
-# ╠═756ef0e0-2bf5-11eb-107c-8d1c65eacc45
+# ╟─756ef0e0-2bf5-11eb-107c-8d1c65eacc45
+# ╠═1e954113-af7b-41bf-b320-e219d8314296
 # ╟─bde632e9-3aa4-4a9e-a736-f41ad057b231
 # ╠═e1dd7abc-2bf5-11eb-1f5a-0f46c7405dd5
 # ╠═9dbb9598-2bf6-11eb-2def-0f1ddd1e6b10
@@ -3198,7 +3229,7 @@ version = "1.9.2+0"
 # ╟─333d2a1a-5f4c-11eb-188a-bb221700e8a0
 # ╠═caefe5ac-5f4d-11eb-2591-67b5515e1bd4
 # ╠═46449848-64e3-11eb-0bf4-c9211b41c68d
-# ╠═670d4db7-924b-4c44-9729-8677a9b757c8
+# ╟─670d4db7-924b-4c44-9729-8677a9b757c8
 # ╠═37cb5545-38cc-49f5-aff7-913eb0d08cbc
 # ╠═7fb698a3-aaad-4a36-ae73-a05602d790af
 # ╟─00000000-0000-0000-0000-000000000001
