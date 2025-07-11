@@ -17,7 +17,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ 9a1cca86-0fff-4f8a-a033-8cf6db337503
-using PlutoUI; TableOfContents()
+using PlutoUI; TableOfContents() 
 
 # ╔═╡ bf1385da-4ac2-11eb-3992-41abac921370
 using Plots
@@ -919,7 +919,7 @@ isnarcistic(153)  # true
 isnarcistic(197)  # false
 
 # ╔═╡ 9bbf8541-795b-4b09-b2ac-db37fa2b8fca
-# find all narcistic numbers between 1 and 100,000
+0:100_000 |> filter(isnarcistic)
 
 # ╔═╡ b1af96ea-5af8-11eb-0d08-f59a4c2b686c
 md"""
@@ -1043,82 +1043,81 @@ Degrade *1000* molecules containing *12* carbon atoms, compute the molecular wei
 """
 
 # ╔═╡ 1f588828-6477-11eb-0c70-557f130c6785
-function degrade(molecule)
-	has_degraded = false
-	parts = split(molecule, '-')
+function degrade(molecule::String)
+	parts = split(molecule,"-") .|> String
+	has_degraded = true
 
-	# will fail on empty list
-    # 1. CH₃-endpoints will turn into COOH;
-	if parts[1] == "CH3"
-		parts[1] = "COOH"
-		has_degraded = true
-	end	
-	if parts[end] == "CH3"
-		parts[end] = "COOH"
-		has_degraded = true
-	end
+	while has_degraded
+		has_degraded = false
 
-	# will fail on empty list and singletons
-    # 2. CO-COOH-endpoints are unstable and will evaporate;
-	if parts[1] == "COOH" && parts[2] == "CO"
-		parts = parts[3:end]
-		has_degraded = true
-	end	
-	if parts[end] == "COOH" && parts[end-1] == "CO"
-		parts = parts[1:end-2]
-		has_degraded = true
-	end	
-
-    # 3. Any CH₂-endpoints are unstable and will turn into CH₃;
-	if parts[1] == "CH2"
-		parts[1] = "CH3"
-		has_degraded = true
-	end	
-	if parts[end] == "CH2"
-		parts[end] = "CH3"
-		has_degraded = true
-	end
-	
-    # 4. The first -CH₂-CH₂- wil react to CO;
-	for i in 1:length(parts)-1
-        if parts[i] == "CH2" && parts[i+1] == "CH2"
-    		insert!(parts, i, "CO")
+	    # 1. CH₃-endpoints will turn into COOH;
+		if length(parts) ≥ 1 && parts[1] == "CH3"
+			parts[1] = "COOH"
 			has_degraded = true
-        end
-    end
-
-    # 5. CO at the endpoints will be converted to COOH;
-	if parts[1] == "CO"
-		parts[1] = "COOH"
-		has_degraded = true
-	end	
-	if parts[end] == "CO"
-		parts[end] = "COOH"
-		has_degraded = true
-	end
-	
-    # 6. A CO-CO-CO is also very unstable and will turn into CO-CH₂-CO.
-	for i in 1:length(parts)-2
-        if parts[i] == "CO" && parts[i+1] == "CO" && parts[i+2] == "CO"
-    		parts[i+1] == "CH2"
+		end	
+		if length(parts) ≥ 1 && parts[end] == "CH3"
+			parts[end] = "COOH"
 			has_degraded = true
-        end
-    end
+		end
 	
-    # 7. When CH2 or CH3 is the molecule that remains, it will change to CH4.
-	for (i,part) in enumerate(parts)
-        if part == "CH2" || part == "CH3"
-    		parts[i] == "CH4"
+	    # 2. CO-COOH-endpoints are unstable and will evaporate;
+		if length(parts) ≥ 2 && parts[1] == "COOH" && parts[2] == "CO"
+			parts = parts[3:end]
 			has_degraded = true
-        end
-    end
+		end	
+		if length(parts) ≥ 2 && parts[end] == "COOH" && parts[end-1] == "CO"
+			parts = parts[1:end-2]
+			has_degraded = true
+		end
 	
-	new_molecule = join(parts, "-")
-	if has_degraded
-		degrade(new_molecule)
-	else
-		return new_molecule
+	    # 3. Any CH₂-endpoints are unstable and will turn into CH₃;
+		if length(parts) ≥ 1 && parts[1] == "CH2"
+			parts[1] = "CH3"
+			has_degraded = true
+		end	
+		if length(parts) ≥ 1 && parts[end] == "CH2"
+			parts[end] = "CH3"
+			has_degraded = true
+		end
+		
+	    # 4. The first -CH₂-CH₂- wil react to CO;
+		for i in 1:length(parts)-1
+			if parts[i] == "CH2" && parts[i+1] == "CH2"
+				parts[i] = "CO"
+				deleteat!(parts,i+1)
+				has_degraded = true
+				break
+			end
+		end
+		
+	
+	    # 5. CO at the endpoints will be converted to COOH;
+		if length(parts) ≥ 1 && parts[1] == "CO"
+			parts[1] = "COOH"
+			has_degraded = true
+		end	
+		if length(parts) ≥ 1 && parts[end] == "CO"
+			parts[end] = "COOH"
+			has_degraded = true
+		end
+		
+	    # 6. A CO-CO-CO is also very unstable and will turn into CO-CH₂-CO.
+		for i in 1:length(parts)-2
+			if parts[i] == "CO" && parts[i+1] == "CO" && parts[i+2] == "CO"
+				parts[i+1] = "CH2"
+				has_degraded = true
+			end
+		end
+		
+	    # 7. When CH2 or CH3 is the molecule that remains, it will change to CH4.
+		if length(parts) == 1 && (parts[1] == "CH2" || parts[1] == "CH3")
+	    		parts[1] = "CH4"
+				has_degraded = true
+	    end
 	end
+	m = join(parts,"-")
+	return m
+	
 end
 
 # ╔═╡ 4d0e1d60-6476-11eb-154e-d9cc3bf284c2
@@ -1128,7 +1127,7 @@ caproic_acid = "CH3-CH2-CH2-CH2-CH2-COOH"
 verylongium = "COOH-CO-CO-CH2-CH2-CO-CO-CH2-CO-CO-CH2-CH2-CO-CH2-CH2-CH2-CO-CH2-CO-CH2-CH2-CO-CH2-CH2-CO-CH2-CO-CH2-CH2-CO-CO-CH2-CH2-CH2-CH2-CH2-CO-CO-CH2-CH2-CO-CH2-CO-CH2-CO-CH2-CH2-CO-CO-CO-CH2-CO-CH2-CH2-CO-CO-CH2-CH2-CH2-CH2-CO-CH2-CH2-CO-CO-CO-CH2-CO-CH2-CH2-CH2-CO-CO-CO-CO-CO-CO-CH2-CH2-CH2-CO-CO-CO-CO-CH2-CH2-CH2-CO-CH2-CO-CO-CO-CO-CO-CH2-CO-CO-CH2-CH2-CH3" 
 
 # ╔═╡ c4d03faa-647d-11eb-3a84-d7b2d53e4720
-# degrade(caproic_acid)
+degrade(caproic_acid)
 
 # ╔═╡ c55ed390-647d-11eb-22d5-33fbae27a2bb
 function generator(N; tips=["CH3", "COOH"], backbone=["CH2", "CO"])
@@ -1143,14 +1142,12 @@ C12 = [generator(12) for i in 1:10]
 
 # ╔═╡ 061e4894-647b-11eb-06db-310d02463b80
 function molecular_weight(molecule)
-	return missing
+	dict = Dict([("CH4",16.0), ("CH3",15.0), ("CH2",14.0), ("CO",28.0), ("OH",17.0), ("COOH",45), ("",0.0), ])
+	return split(molecule,"-") .|> (s -> dict[s]) |> sum
 end
 
 # ╔═╡ 89a9ad00-6489-11eb-2a2d-bfa18af103ab
-#Plotting
-
-# ╔═╡ 8ab56dcc-6489-11eb-16a4-b7d12003ed99
-
+histogram([generator(12) |> degrade |> molecular_weight for i ∈ 1:1000])
 
 # ╔═╡ 0507186a-647a-11eb-07cf-ebf32bdff5b0
 md"""
@@ -1175,14 +1172,25 @@ Optional: Write a function `print_big_grid` that draws a similar grid with four 
 """
 
 # ╔═╡ 448ef88e-4ad2-11eb-20d6-17a51d665ef9
-function print_grid()
-	missing
+function print_grid_general(size::Int, nrow::Int,ncol::Int)
+	dashes = " -" ^ size * " "
+	edge_h = "+" * dashes 
+	horizontal = edge_h ^ ncol * "+\n"
+	edge_v = "|" * " " ^ (2*size +1)
+	vertical = edge_v ^ ncol * "|\n"
+	grid_row = horizontal * vertical ^ size
+	grid = grid_row ^ nrow * horizontal
+	println(grid)
 end
 
+# ╔═╡ 28c2ec4f-09ab-4d90-918f-ce19b132275e
+print_grid_general(4,2,2)
+
 # ╔═╡ 14d50ee8-4ad3-11eb-3b81-9138aec66207
-function print_big_grid()
-	missing
-end
+print_grid_general(4,4,4)
+
+# ╔═╡ d251a6ae-4985-44f3-90d1-27c2acfed272
+print_grid_general(3,4,5)
 
 # ╔═╡ 2bff11a1-7e39-43e5-8058-5d1496f43387
 md"""## Answers
@@ -1411,8 +1419,8 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
-Plots = "~1.38.0"
-PlutoUI = "~0.7.55"
+Plots = "~1.40.14"
+PlutoUI = "~0.7.68"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1421,7 +1429,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "cafab990e8d9aa1ae58a87c48bf8a9eac253fa0d"
+project_hash = "06dd79d9fa54fa73c31c32146db696622fc30acb"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -1638,16 +1646,16 @@ uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
 version = "3.4.0+2"
 
 [[deps.GR]]
-deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Preferences", "Printf", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "UUIDs", "p7zip_jll"]
-git-tree-sha1 = "27442171f28c952804dede8ff72828a96f2bfc1f"
+deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
+git-tree-sha1 = "4424dca1462cc3f19a0e6f07b809ad948ac1d62b"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.72.10"
+version = "0.73.16"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "025d171a2847f616becc0f84c8dc62fe18f0f6dd"
+git-tree-sha1 = "d7ecfaca1ad1886de4f9053b5b8aef34f36ede7f"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.72.10+0"
+version = "0.73.16+0"
 
 [[deps.GettextRuntime_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll"]
@@ -1743,10 +1751,10 @@ uuid = "c1c5ebd0-6772-5130-a774-d5fcae4a789d"
 version = "3.100.3+0"
 
 [[deps.LERC_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "aaafe88dccbd957a8d82f7d05be9b69172e0cee3"
 uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
-version = "3.0.0+1"
+version = "4.0.1+0"
 
 [[deps.LLVMOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1838,9 +1846,9 @@ version = "2.41.0+0"
 
 [[deps.Libtiff_jll]]
 deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "XZ_jll", "Zlib_jll", "Zstd_jll"]
-git-tree-sha1 = "2da088d113af58221c52828a80378e16be7d037a"
+git-tree-sha1 = "4ab7581296671007fc33f07a721631b8855f4b1d"
 uuid = "89763e89-9b03-5906-acba-b20f662cd828"
-version = "4.5.1+1"
+version = "4.7.1+0"
 
 [[deps.Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -2018,10 +2026,10 @@ uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.4.3"
 
 [[deps.Plots]]
-deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "PrecompileTools", "Preferences", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "UnitfulLatexify", "Unzip"]
-git-tree-sha1 = "9f8675a55b37a70aa23177ec110f6e3f4dd68466"
+deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "PrecompileTools", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "TOML", "UUIDs", "UnicodeFun", "UnitfulLatexify", "Unzip"]
+git-tree-sha1 = "28ea788b78009c695eb0d637587c81d26bdf0e36"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.38.17"
+version = "1.40.14"
 
     [deps.Plots.extensions]
     FileIOExt = "FileIO"
@@ -2067,9 +2075,27 @@ version = "1.3.0"
 
 [[deps.Qt6Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Vulkan_Loader_jll", "Xorg_libSM_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_cursor_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "libinput_jll", "xkbcommon_jll"]
-git-tree-sha1 = "37b7bb7aabf9a085e0044307e1717436117f2b3b"
+git-tree-sha1 = "eb38d376097f47316fe089fc62cb7c6d85383a52"
 uuid = "c0090381-4147-56d7-9ebc-da0b1113ec56"
-version = "6.5.3+1"
+version = "6.8.2+1"
+
+[[deps.Qt6Declarative_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Qt6Base_jll", "Qt6ShaderTools_jll"]
+git-tree-sha1 = "da7adf145cce0d44e892626e647f9dcbe9cb3e10"
+uuid = "629bc702-f1f5-5709-abd5-49b8460ea067"
+version = "6.8.2+1"
+
+[[deps.Qt6ShaderTools_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Qt6Base_jll"]
+git-tree-sha1 = "9eca9fc3fe515d619ce004c83c31ffd3f85c7ccf"
+uuid = "ce943373-25bb-56aa-8eca-768745ed7b5a"
+version = "6.8.2+1"
+
+[[deps.Qt6Wayland_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Qt6Base_jll", "Qt6Declarative_jll"]
+git-tree-sha1 = "2766344a35a1a5ec1147305c4b343055d7c22c90"
+uuid = "e99dba38-086e-5de3-a5b1-6e4c66e897c3"
+version = "6.8.2+0"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "StyledStrings", "Unicode"]
@@ -2775,12 +2801,13 @@ version = "1.9.2+0"
 # ╠═989d0dd2-647a-11eb-3123-39786452714a
 # ╠═061e4894-647b-11eb-06db-310d02463b80
 # ╠═89a9ad00-6489-11eb-2a2d-bfa18af103ab
-# ╠═8ab56dcc-6489-11eb-16a4-b7d12003ed99
 # ╟─743924b0-0b3b-48e2-9b93-961311d08022
 # ╟─0507186a-647a-11eb-07cf-ebf32bdff5b0
 # ╠═448ef88e-4ad2-11eb-20d6-17a51d665ef9
 # ╟─15257785-52b5-4129-9e65-7fa15e83a6e3
+# ╠═28c2ec4f-09ab-4d90-918f-ce19b132275e
 # ╠═14d50ee8-4ad3-11eb-3b81-9138aec66207
+# ╠═d251a6ae-4985-44f3-90d1-27c2acfed272
 # ╟─0f095a13-8586-4da3-84ae-24c43a303776
 # ╟─2bff11a1-7e39-43e5-8058-5d1496f43387
 # ╟─00000000-0000-0000-0000-000000000001
